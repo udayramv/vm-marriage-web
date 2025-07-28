@@ -2,22 +2,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; // Make sure Link is imported
 import { getProfiles } from '../api';
-import '../App.css'; // Assuming App.css contains shared styles, or create Home.css if preferred
+import useLikes from '../hooks/useLikes';
+import ProfileCard from './ProfileCard';
+import './Home.css';
+// import '../App.css'; // Assuming App.css contains shared styles, or create Home.css if preferred
 
-function Home() {
+const Home = ({ toggleTheme, theme }) => {
   const [profiles, setProfiles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProfiles, setTotalProfiles] = useState(0);
-  const [filters, setFilters] = useState({ gender: '', age_min: '', age_max: '' });
+  // const [sortFilters, setSortFilters] = useState({ sort_age: '' });
+  const [sortOrder, setSortOrder] = useState({reverse: ''});
+  const [filters, setFilters] = useState({ gender: '', age_min: '', age_max: '', name: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { likedIds, toggleLike, isLiked } = useLikes();
 
   const fetchProfiles = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getProfiles(currentPage, filters);
+      const data = await getProfiles(currentPage, filters, sortOrder);
+      
+      // setProfiles([]);
       setProfiles(data.profiles);
       setTotalPages(data.total_pages);
       setTotalProfiles(data.total_profiles);
@@ -30,7 +38,7 @@ function Home() {
 
   useEffect(() => {
     fetchProfiles();
-  }, [currentPage, filters]); // Re-fetch when page or filters change
+  }, [currentPage, filters, sortOrder]); // Re-fetch when page or filters change
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -38,28 +46,56 @@ function Home() {
     }
   };
 
+  // const handleSortByAgeExist = () => {
+  //   const sortedProfiles = [...profiles];
+
+  //    if (sortOrder === 'asc'){
+  //     // Initial sort, sort ascending
+  //     sortedProfiles.sort((a, b) => a.age - b.age);
+  //    } else {
+  //     sortedProfiles.sort((a, b) => b.age - a.age);
+  //    };
+  //    setProfiles(sortedProfiles);
+  // };
+
+  const handleSortByAge = () => {
+    // Create a copy of the profiles array to avoid mutating state directly
+
+    if (sortOrder.reverse === 'false') {
+      // Sort descending
+      setSortOrder({ reverse: 'true' });
+      setProfiles([]);
+      setCurrentPage(1);
+    } else {
+      // Sort ascending
+      setSortOrder({ reverse: 'false' });
+      setProfiles([]);
+      setCurrentPage(1);
+    };
+  };
+
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
+    setProfiles([]);
     setCurrentPage(1); // Reset to page 1 when filters change
   };
 
   const handleClearFilters = () => {
-    setFilters({ gender: '', age_min: '', age_max: '' });
+    setFilters({ gender: '', age_min: '', age_max: '', name: '' });
+    // setSortFilters({sort_age: ''})
+    setSortOrder({reverse: ''});
+    setProfiles([]);
     setCurrentPage(1);
   };
 
   return (
-    <div className="App"> {/* You can apply global styles via App.css here */}
-      
-      {/* <div> */}
-      {/* <h1><img src={`http://localhost:5000/static/marriage_icon.jpg`} alt={`marriage logo`} className="header-image"/>Marriage Profiles</h1> */}
-      {/* </div> */}
+    <div className="App">
 
-      {/* <div class="header">
-        <img src={`http://localhost:5000/static/marriage_icon.jpg`} alt="marriage logo" className='header-image'/>
-        <h1>Marriage Match Selection</h1>
-      </div> */}
-      {/* <h1>Marriage Profiles</h1> */}
+      <div className="theme-toggle">
+        <button onClick={toggleTheme}>
+          {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        </button>
+      </div>
 
       <header class="header">
         <div class="wrapper">
@@ -92,35 +128,46 @@ function Home() {
           value={filters.age_max}
           onChange={handleFilterChange}
         />
-        <button onClick={handleClearFilters}>Clear Filters</button>
+        <input
+          type="search"
+          name="name"
+          placeholder="Name"
+          value={filters.name}
+          onChange={handleFilterChange}
+        />
+        <button onClick={handleClearFilters} ClassName='clear-button'>Clear Filters</button>
+          
+        
+        {/* <button onClick={handleSortByAge}>Age</button> */}
+        {/* <button onClick={handleSortChange}>Age {filters.sort_age === 'false' ? <FaSortUp /> : <FaSortDown />}</button> */}
+        {/* <button onClick={handleSortChange}>Age {filters.sort_age === 'false' ? <BiSolidUpArrow /> : <BiSolidDownArrow />}</button> */}
+        {/* <button onClick={handleSortChange}>
+          <FontAwesomeIcon icon={filters.sort_age ? FaSortUp : FaSortDown} />
+          Age</button> */}
+        <button onClick={handleSortByAge} ClassName='sort-button'>
+          {sortOrder.reverse === 'false' ? '▲' : sortOrder.reverse === 'true' ? '▼' : '⇅'}
+        </button>
       </div>
 
       {loading && <p>Loading profiles...</p>}
       {error && <p className="error-message">{error}</p>}
 
+      {/* Profile List Display */}
       <div className="profile-list">
         {profiles.length > 0 ? (
-          profiles.map((profile) => (
-            // Wrap the profile card in a Link component to navigate to its detail page
-            <Link to={`/profile/${profile.id}`} key={profile.id} className="profile-card-link">
-              <div className="profile-card">
-                <img
-                  src={`http://localhost:5000/static/${profile.image}`}
-                  alt={profile.name}
-                  className="profile-image"
-                />
-                <h3>{profile.name}</h3>
-                <p>Age: {profile.age}</p>
-                <p>Gender: {profile.gender}</p>
-                {/* Occupation is commented out to save space in the list view,
-                    but is available on the detail page. */}
-                {/* <p>Occupation: {profile.occupation}</p> */}
-              </div>
-            </Link>
-          ))
-        ) : (
-          !loading && <p>No profiles found matching your criteria.</p>
-        )}
+          profiles.map(profile => (
+          // <Link to={`/profile/${profile.id}`} key={profile.id} className="profile-card-link">
+          <ProfileCard
+            key={profile.id}
+            profile={profile}
+            isLiked={isLiked(profile.id)} // Pass the like state as a prop
+            onLikeToggle={toggleLike}     // Pass the toggle function as a prop
+          />
+          // </Link>
+        )) 
+      ) : (
+        !loading && <p>No profiles found matching your criteria.</p>
+      )}
       </div>
 
       <div className="pagination">

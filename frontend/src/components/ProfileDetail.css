@@ -1,0 +1,38 @@
+/* src/components/ProfileCard.css */
+
+.profile-card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px var(--shadow-color);
+  text-align: center;
+  padding: 20px;
+  transition: transform 0.2s, background-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.profile-card:hover {
+  transform: translateY(-5px);
+}
+
+.profile-card img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 3px solid var(--border-color);
+  transition: border-color 0.3s;
+}
+
+.profile-card h3 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.5em;
+  transition: color 0.3s;
+}
+
+.profile-card p {
+  margin: 5px 0;
+  color: var(--text-secondary-color);
+  transition: color 0.3s;
+}
